@@ -11,8 +11,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 def build_model():
     model = keras.Sequential([
-        #keras.layers.Dense(3, activation='relu', input_shape=(train_data.shape[1],)),
-        #keras.layers.SimpleRNN(64, batch_input_shape=(None,None,3)),
         keras.layers.SimpleRNN(3, input_shape=(train_x.shape[1], train_x.shape[2])),
         keras.layers.Dense(1)
     ])
@@ -72,13 +70,13 @@ train_data, train_labels = getData()
 
 #May need tanh to normalise since t_db has negative values
 scaler = MinMaxScaler(feature_range=(0, 1))
+# Alternative scaler
 #scaler = StandardScaler()
 train_data = scaler.fit_transform(train_data)
 lag_timesteps = 3
 features = train_data.shape[0]
 
 train_data = series_to_supervised(train_data, 1, 1)
-print(train_data[:5])
 train_data.drop(train_data.columns[[5,6,7]], axis=1, inplace=True)
 
 train_data = train_data.values
