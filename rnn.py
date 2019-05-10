@@ -97,14 +97,16 @@ model = build_model()
 model.summary()
 #
 EPOCHS = 100
+VERBOSE = 2
 #
 ## The patience parameter is the amount of epochs to check for improvement
 
 early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=50)
 
 history = model.fit(train_x, train_y, epochs=EPOCHS, 
-        validation_data=(test_x, test_y), verbose=2, 
+        validation_data=(test_x, test_y), verbose=VERBOSE, 
         shuffle=False, callbacks=[early_stop])
+
 plt.plot(history.history['loss'], label='train')
 plt.plot(history.history['val_loss'], label='test')
 plt.legend()
@@ -137,10 +139,13 @@ plt.show()
 
 
 plt.clf()
-plt.xlabel('Time')
+plt.xlabel('Timestep')
 plt.ylabel('Predictions/Actual')
 time = [i for i in range(len(inv_y))]
-plt.scatter(time, inv_y, s=1, label='Actual Load')
-plt.scatter(time,inv_yhat, s=1, label='Predicted Load')
+#plt.scatter(time, inv_y, s=1, label='Actual Load')
+#plt.scatter(time,inv_yhat, s=1, label='Predicted Load')
+plt.plot(time, inv_y, label='Actual Load',linewidth=1)
+plt.plot(time,inv_yhat, label='Predicted Load',linestyle='dashed',linewidth=1)
 plt.legend()
+plt.savefig('predicted.png')
 plt.show()
