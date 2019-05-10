@@ -1,5 +1,5 @@
 # multivariate-time-series-prediction
-Multivariate time series prediction, predicting load given certain inputs. This project was used to accurately predict electricity load on air conditioners given certain environmental inputs.
+Multivariate time series prediction, predicting load given certain inputs. This model was used to accurately predict electricity load on air conditioners given certain environmental inputs.
 
 # Data
 The data is contained in load.txt. Exploratory analysis shows some data types are correlated with time. Below is are inputs normalised over time.
