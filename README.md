@@ -4,11 +4,11 @@ Multivariate time series prediction, predicting load given certain inputs. This 
 # Data
 The data is contained in load.txt. Exploratory analysis shows some data types are correlated with time. Below is are inputs normalised over time.
 
-![Normalised inputs over time](https://imgur.com/Gq5rn8H)
+![Normalised inputs over time](https://i.imgur.com/Gq5rn8H.png)
 
 # Results
 The RNN predicts load with over 91% accuracy on test data. 
-![Image of predicted/actual](https://imgur.com/QvQqB9J)
+![Image of predicted/actual](https://i.imgur.com/QvQqB9J.png)
 
 
 Uses a SimpleRNN using the tensorflow keras API. Can be configured to use LSTMs/GRUs and so forth.
