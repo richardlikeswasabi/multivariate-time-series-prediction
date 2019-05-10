@@ -4,7 +4,7 @@ Multivariate time series prediction, predicting load given certain inputs. This 
 # Data
 The data is contained in load.txt. Exploratory analysis shows some data types are correlated with time. Below is are inputs normalised over time.
 
-![Normalised inputs over time](hhttps://imgur.com/Gq5rn8H)
+![Normalised inputs over time](https://imgur.com/Gq5rn8H)
 
 # Results
 The RNN predicts load with over 91% accuracy on test data. 
