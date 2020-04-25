@@ -1,151 +1,202 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[310]:
+
+
+from pandas import read_csv, DataFrame, concat
 import tensorflow as tf
-from tensorflow import keras
+from matplotlib import pyplot
+from sklearn.preprocessing import MinMaxScaler
+from numpy import concatenate
 from math import sqrt
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from sklearn.metrics import mean_squared_error,mean_absolute_error
-from pandas import read_csv
-from pandas import DataFrame
-from pandas import concat
-import matplotlib.pyplot as plt
 
-import numpy as np
-def build_model():
-    model = keras.Sequential([
-        keras.layers.SimpleRNN(3, input_shape=(train_x.shape[1], train_x.shape[2])),
-        keras.layers.Dense(1)
-    ])
 
-    opt = tf.train.RMSPropOptimizer(0.001)
+# In[311]:
 
-    model.compile(loss='mse', 
-            optimizer=opt,
-            metrics=['mae'])
-    return model
+
+dataset = read_csv("load.txt", delim_whitespace=True)
+values = dataset.values
+print(dataset.head())
+# specify columns to plot
+groups = [0, 1, 2, 3, 4]
+i = 1
+# plot each column
+pyplot.figure()
+for group in groups:
+	pyplot.subplot(len(groups), 1, i)
+	pyplot.plot(values[:, group])
+	pyplot.title(dataset.columns[group], y=0.5, loc='right')
+	i += 1
+pyplot.show()
+
+dataset.drop(dataset.columns[[0]], axis=1, inplace=True)
+print(dataset.head())
+values = dataset.values
+
+print(dataset.loc[dataset['load'].idxmax()])
+print(dataset.loc[dataset['load'].idxmin()])
+
+
+# In[312]:
+
 
 # convert series to supervised learning
 def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
-    n_vars = 1 if type(data) is list else data.shape[1]
-    df = DataFrame(data)
-    cols, names = list(), list()
-    # input sequence (t-n, ... t-1)
-    for i in range(n_in, 0, -1):
-        cols.append(df.shift(i))
-        names += [('var%d(t-%d)' % (j+1, i)) for j in range(n_vars)]
-    # forecast sequence (t, t+1, ... t+n)
-    for i in range(0, n_out):
-        cols.append(df.shift(-i))
-        if i == 0:
-            names += [('var%d(t)' % (j+1)) for j in range(n_vars)]
-        else:
-            names += [('var%d(t+%d)' % (j+1, i)) for j in range(n_vars)]
-    # put it all together
-    agg = concat(cols, axis=1)
-    agg.columns = names
-    # drop rows with NaN values
-    if dropnan:
-        agg.dropna(inplace=True)
-    return agg
+	n_vars = 1 if type(data) is list else data.shape[1]
+	df = DataFrame(data)
+	cols, names = list(), list()
+	# input sequence (t-n, ... t-1)
+	for i in range(n_in, 0, -1):
+		cols.append(df.shift(i))
+		names += [('var%d(t-%d)' % (j+1, i)) for j in range(n_vars)]
+	# forecast sequence (t, t+1, ... t+n)
+	for i in range(0, n_out):
+		cols.append(df.shift(-i))
+		if i == 0:
+			names += [('var%d(t)' % (j+1)) for j in range(n_vars)]
+		else:
+			names += [('var%d(t+%d)' % (j+1, i)) for j in range(n_vars)]
+	# put it all together
+	agg = concat(cols, axis=1)
+	agg.columns = names
+	# drop rows with NaN values
+	if dropnan:
+		agg.dropna(inplace=True)
+	return agg
 
 
-def getData():
-    f = open("load.txt", "r")
-    # Remove column headers
-    train_data, train_labels, test_data, test_labels = [], [], [], []
-    lines = f.readlines()[1:]
-    for line in lines:
-        line = line.split()
-        # element = (time, t_db, RH, Rad, load)
-        element = np.array([line[0], line[1], line[2], line[3], line[4]])
-        # Convert into floats
-        element = np.asarray(element, dtype = float)
-        # Add element to data
-        element = element[1:5]
-        train_data.append(element)
-        #train_data.append(np.concatenate(element[4],0, element.pop()))
-    f.close()
-    return np.array(train_data), np.array(train_labels)
+# In[313]:
 
 
-train_data, train_labels = getData()
-
-#May need tanh to normalise since t_db has negative values
+values = values.astype('float32')
+# normalize features
 scaler = MinMaxScaler(feature_range=(0, 1))
-# Alternative scaler
-#scaler = StandardScaler()
-train_data = scaler.fit_transform(train_data)
-lag_timesteps = 3
-features = train_data.shape[0]
+print(values)
+scaled = scaler.fit_transform(values)
+#scaled = values
 
-train_data = series_to_supervised(train_data, 1, 1)
-train_data.drop(train_data.columns[[5,6,7]], axis=1, inplace=True)
 
-train_data = train_data.values
-train_timesteps = 7000 
-train = train_data[:train_timesteps, :]
-test = train_data[train_timesteps:, :]
-train_x, train_y = train[:, :-1], train[:, -1]
-test_x, test_y = test[:, :-1], test[:, -1]
+# frame as supervised learning
+reframed = series_to_supervised(scaled, 1, 1)
+# drop columns we don't want to predict
+reframed.drop(reframed.columns[[4,5,6]], axis=1, inplace=True)
+# Inputs var1 = t_db, var2 = RH, var3 = Rad, var4 = load
+print(reframed.head(10))
 
-train_x = train_x.reshape((train_x.shape[0], 1, train_x.shape[1]))
-test_x = test_x.reshape((test_x.shape[0], 1, test_x.shape[1]))
 
-print(train_x.shape, train_y.shape, test_x.shape, test_y.shape)
+# In[314]:
 
-print(train_data[:5])
 
-model = build_model()
+values = reframed.values
+n_train_hours = 7000
+train = values[:n_train_hours, :]
+test = values[n_train_hours:, :]
+print(test)
+# split into input and outputs
+train_X, train_y = train[:, :-1], train[:, -1]
+test_X, test_y = test[:, :-1], test[:, -1]
+# reshape input to be 3D [samples, timesteps, features]
+train_X = train_X.reshape((train_X.shape[0], 1, train_X.shape[1]))
+test_X = test_X.reshape((test_X.shape[0], 1, test_X.shape[1]))
+print(train_X.shape, train_y.shape, test_X.shape, test_y.shape)
+
+
+# In[315]:
+
+
+model = tf.keras.Sequential()
+model.add(tf.keras.layers.SimpleRNN(3, input_shape=(train_X.shape[1], train_X.shape[2])))
+model.add(tf.keras.layers.Dense(1))
+opt = tf.train.RMSPropOptimizer(0.001)
+model.compile(loss='mae', optimizer=opt)
 model.summary()
-#
+
+
+# In[316]:
+
+
 EPOCHS = 100
-VERBOSE = 2
-#
-## The patience parameter is the amount of epochs to check for improvement
+VERBOSE = 1
 
-early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=50)
+early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=50)
 
-history = model.fit(train_x, train_y, epochs=EPOCHS, 
-        validation_data=(test_x, test_y), verbose=VERBOSE, 
-        shuffle=False, callbacks=[early_stop])
+history = model.fit(train_X, train_y, epochs=EPOCHS, 
+        validation_data=(test_X, test_y), verbose=VERBOSE, 
+        shuffle=False, callbacks=[early_stop], batch_size=72)
 
-plt.plot(history.history['loss'], label='train')
-plt.plot(history.history['val_loss'], label='test')
-plt.legend()
-plt.show()
+pyplot.plot(history.history['loss'], label='train')
+pyplot.plot(history.history['val_loss'], label='test')
+pyplot.legend()
+pyplot.show()
+
+
+# In[317]:
+
+
 # make a prediction
-yhat = model.predict(test_x)
-test_x = test_x.reshape((test_x.shape[0], test_x.shape[2]))
+yhat = model.predict(test_X)
+test_X = test_X.reshape((test_X.shape[0], test_X.shape[2]))
+
+
+# In[318]:
+
+
 # invert scaling for forecast
-inv_yhat = np.concatenate((test_x[:,1:],yhat), axis=1)
+inv_yhat = concatenate((test_X[:,[0,1,2]], yhat), axis=1)
 inv_yhat = scaler.inverse_transform(inv_yhat)
 inv_yhat = inv_yhat[:,-1]
+
+
+# In[319]:
+
+
 # invert scaling for actual
 test_y = test_y.reshape((len(test_y), 1))
-inv_y = np.concatenate((test_x[:,1:],test_y), axis=1)
+inv_y = concatenate((test_X[:,[0,1,2]], test_y), axis=1)
 inv_y = scaler.inverse_transform(inv_y)
 inv_y = inv_y[:,-1]
-# calculate RMSE
+
+
+# In[320]:
+
+
+from sklearn.metrics import mean_squared_error,mean_absolute_error
 rmse = sqrt(mean_squared_error(inv_y, inv_yhat))
 print('Test RMSE: %.3f' % rmse)
 mae = mean_absolute_error(inv_y, inv_yhat)
 print('Test MAE: %.3f' % mae)
-print('Average test accuracy: %.3f' % (100-(mae*100/7000))+'%')
-
-plt.clf()
-plt.xlabel('Predicted')
-plt.ylabel('Actual')
-plt.scatter(inv_yhat, inv_y, s=1)
-_ = plt.plot([-4000,4000], [-4000,4000])
-plt.show()
 
 
-plt.clf()
-plt.xlabel('Timestep')
-plt.ylabel('Predictions/Actual')
+# In[321]:
+
+
 time = [i for i in range(len(inv_y))]
-#plt.scatter(time, inv_y, s=1, label='Actual Load')
-#plt.scatter(time,inv_yhat, s=1, label='Predicted Load')
-plt.plot(time, inv_y, label='Actual Load',linewidth=1)
-plt.plot(time,inv_yhat, label='Predicted Load',linestyle='dashed',linewidth=1)
-plt.legend()
-plt.savefig('predicted.png')
-plt.show()
+pyplot.clf()
+pyplot.title("Test Set")
+pyplot.xlabel('Timestep')
+pyplot.ylabel('Predictions/Actual')
+pyplot.rcParams['figure.figsize'] = [30, 10]
+pyplot.plot(time, inv_y, label='Actual Load',linewidth=1)
+pyplot.plot(time,inv_yhat, label='Predicted Load',linestyle='dashed',linewidth=1)
+pyplot.legend()
+pyplot.savefig('predicted.png')
+pyplot.show()
+
+
+# In[322]:
+
+
+pyplot.clf()
+pyplot.xlabel('Predicted')
+pyplot.ylabel('Actual')
+pyplot.scatter(inv_yhat, inv_y, s=1)
+#_ = pyplot.plot([-4000,4000], [-4000,4000])
+pyplot.show()
+
+
+# In[ ]:
+
+
+
+

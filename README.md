@@ -8,8 +8,7 @@ The data is contained in load.txt. Exploratory analysis shows some data types ar
 
 # Results
 The RNN predicts load with over 91% accuracy on test data. 
-![Image of predicted/actual](https://i.imgur.com/QvQqB9J.png)
-
+![Image of predicted/actual](https://i.imgur.com/gDy8q6b.png)
 
 Uses a SimpleRNN using the tensorflow keras API. Can be configured to use LSTMs/GRUs and so forth.
 
