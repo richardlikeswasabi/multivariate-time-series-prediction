@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[310]:
+# In[8]:
 
 
 from pandas import read_csv, DataFrame, concat
@@ -12,7 +12,13 @@ from numpy import concatenate
 from math import sqrt
 
 
-# In[311]:
+# In[ ]:
+
+
+
+
+
+# In[9]:
 
 
 dataset = read_csv("load.txt", delim_whitespace=True)
@@ -38,7 +44,7 @@ print(dataset.loc[dataset['load'].idxmax()])
 print(dataset.loc[dataset['load'].idxmin()])
 
 
-# In[312]:
+# In[10]:
 
 
 # convert series to supervised learning
@@ -66,7 +72,7 @@ def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
 	return agg
 
 
-# In[313]:
+# In[11]:
 
 
 values = values.astype('float32')
@@ -85,7 +91,7 @@ reframed.drop(reframed.columns[[4,5,6]], axis=1, inplace=True)
 print(reframed.head(10))
 
 
-# In[314]:
+# In[12]:
 
 
 values = reframed.values
@@ -102,18 +108,18 @@ test_X = test_X.reshape((test_X.shape[0], 1, test_X.shape[1]))
 print(train_X.shape, train_y.shape, test_X.shape, test_y.shape)
 
 
-# In[315]:
+# In[13]:
 
 
 model = tf.keras.Sequential()
 model.add(tf.keras.layers.SimpleRNN(3, input_shape=(train_X.shape[1], train_X.shape[2])))
 model.add(tf.keras.layers.Dense(1))
-opt = tf.train.RMSPropOptimizer(0.001)
+opt = tf.keras.optimizers.RMSprop(0.001)
 model.compile(loss='mae', optimizer=opt)
 model.summary()
 
 
-# In[316]:
+# In[14]:
 
 
 EPOCHS = 100
@@ -131,7 +137,7 @@ pyplot.legend()
 pyplot.show()
 
 
-# In[317]:
+# In[15]:
 
 
 # make a prediction
@@ -139,7 +145,7 @@ yhat = model.predict(test_X)
 test_X = test_X.reshape((test_X.shape[0], test_X.shape[2]))
 
 
-# In[318]:
+# In[16]:
 
 
 # invert scaling for forecast
@@ -148,7 +154,7 @@ inv_yhat = scaler.inverse_transform(inv_yhat)
 inv_yhat = inv_yhat[:,-1]
 
 
-# In[319]:
+# In[17]:
 
 
 # invert scaling for actual
@@ -158,7 +164,7 @@ inv_y = scaler.inverse_transform(inv_y)
 inv_y = inv_y[:,-1]
 
 
-# In[320]:
+# In[18]:
 
 
 from sklearn.metrics import mean_squared_error,mean_absolute_error
@@ -168,7 +174,7 @@ mae = mean_absolute_error(inv_y, inv_yhat)
 print('Test MAE: %.3f' % mae)
 
 
-# In[321]:
+# In[19]:
 
 
 time = [i for i in range(len(inv_y))]
@@ -184,7 +190,7 @@ pyplot.savefig('predicted.png')
 pyplot.show()
 
 
-# In[322]:
+# In[20]:
 
 
 pyplot.clf()
